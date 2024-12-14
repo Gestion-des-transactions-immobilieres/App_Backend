@@ -1,7 +1,9 @@
 package com.immobiler.ProjectGeoInfo.Services;
 
+import com.immobiler.ProjectGeoInfo.Entities.Photo;
 import com.immobiler.ProjectGeoInfo.Entities.PiecesJustif;
 import com.immobiler.ProjectGeoInfo.Entities.Annonce;
+import com.immobiler.ProjectGeoInfo.Repositories.AnnonceRepository;
 import com.immobiler.ProjectGeoInfo.Repositories.PiecesJustifRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +15,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -23,6 +27,8 @@ public class PiecesJustifService {
 
     @Autowired
     private PiecesJustifRepository piecesJustifRepository;
+
+    private AnnonceRepository annonceRepository;
 
     public PiecesJustif uploadFile(MultipartFile file, Annonce annonce) throws IOException {
         // Créer le répertoire si il n'existe pas
@@ -55,5 +61,15 @@ public class PiecesJustifService {
 
         // Sauvegarder l'objet PiecesJustif dans la base de données
         return piecesJustifRepository.save(piecesJustif);
+    }
+
+    // Fetch piecesJustif by Annonce ID
+    public List<PiecesJustif> getpiecesJustifByAnnonceId(Long annonceId) {
+        Optional<Annonce> annonceOptional = annonceRepository.findById(annonceId);
+        if (annonceOptional.isPresent()) {
+            return piecesJustifRepository.findByAnnonce(annonceOptional.get());
+        } else {
+            throw new IllegalArgumentException("Annonce with ID " + annonceId + " not found.");
+        }
     }
 }

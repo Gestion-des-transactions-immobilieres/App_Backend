@@ -38,6 +38,7 @@ public class Annonce implements Serializable {
     @NotNull
     private Point location;
 
+    //JsonProperty.Access.WRITE_ONLY : to avoid unnecessary serialization.
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @OneToMany(mappedBy = "annonce", fetch = FetchType.LAZY,cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Demande> demandes;

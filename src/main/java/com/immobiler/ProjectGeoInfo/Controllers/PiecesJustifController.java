@@ -1,5 +1,6 @@
 package com.immobiler.ProjectGeoInfo.Controllers;
 
+import com.immobiler.ProjectGeoInfo.Entities.Photo;
 import com.immobiler.ProjectGeoInfo.Entities.PiecesJustif;
 import com.immobiler.ProjectGeoInfo.Entities.Annonce;
 import com.immobiler.ProjectGeoInfo.Services.PiecesJustifService;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/pieces-justificatives")
@@ -20,6 +22,14 @@ public class PiecesJustifController {
 
     @Autowired
     private AnnonceRepository annonceRepository;
+
+
+    // Fetch piecesJustif by Annonce ID
+    @GetMapping("/annonce/{annonceId}")
+    public ResponseEntity<List<PiecesJustif>> getPiecesJustifByAnnonceId(@PathVariable Long annonceId) {
+        List<PiecesJustif> piecesJustifs = piecesJustifService.getpiecesJustifByAnnonceId(annonceId);
+        return ResponseEntity.ok(piecesJustifs);
+    }
 
     // Endpoint pour uploader un fichier
     @PostMapping("/upload")

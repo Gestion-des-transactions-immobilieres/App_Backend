@@ -1,11 +1,10 @@
 package com.immobiler.ProjectGeoInfo.Services;
 
-import com.immobiler.ProjectGeoInfo.Entities.Demande;
 import com.immobiler.ProjectGeoInfo.Entities.Photo;
-import com.immobiler.ProjectGeoInfo.Entities.PiecesJustif;
 import com.immobiler.ProjectGeoInfo.Entities.Annonce;
+import com.immobiler.ProjectGeoInfo.Repositories.AnnonceRepository;
 import com.immobiler.ProjectGeoInfo.Repositories.PhotoRepository;
-import com.immobiler.ProjectGeoInfo.Repositories.PiecesJustifRepository;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -17,51 +16,63 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
+
 public class PhotoService {
 
-    @Value("${images.upload-dir}")  // Utilisation d'une propriété configurable pour le répertoire de stockage
+    @Value("${images.upload-dir}")  // Directory to store uploaded images
     private String uploadDir;
-
     @Autowired
     private PhotoRepository photoRepository;
+    @Autowired
+    private AnnonceRepository annonceRepository;
 
     public Photo uploadFile(MultipartFile file, Annonce annonce) throws IOException {
-        // Créer le répertoire si il n'existe pas
+        // Ensure the upload directory exists
         File directory = new File(uploadDir);
         if (!directory.exists()) {
             directory.mkdirs();
         }
 
-        // Générer un nom de fichier unique pour éviter les collisions
+        // Generate a unique file name
         String originalFileName = file.getOriginalFilename();
         String uniqueFileName = UUID.randomUUID().toString() + "_" + originalFileName;
 
-        // Créer le chemin absolu du fichier
-        Path path = Paths.get(uploadDir, uniqueFileName);
-
-        // Vérifier l'extension du fichier (facultatif, mais recommandé pour la sécurité)
+        // Validate the file extension
         String extension = originalFileName.substring(originalFileName.lastIndexOf(".") + 1).toLowerCase();
         if (!"jpg".equals(extension) && !"png".equals(extension)) {
-            throw new IllegalArgumentException("Seuls les fichiers JPG, PNG  sont autorisés.");
+            throw new IllegalArgumentException("Only JPG and PNG files are allowed.");
         }
 
-        // Sauvegarder le fichier dans le répertoire
-        Files.write(path, file.getBytes());
+        // Save the file temporarily to validate its MIME type
+        Path tempFilePath = Paths.get(uploadDir, uniqueFileName);
+        Files.write(tempFilePath, file.getBytes());
 
-        // Créer l'entité photo et l'associer à l'annonce
+        // Validate MIME type using the saved file
+        String mimeType = Files.probeContentType(tempFilePath);
+        if (!"image/jpeg".equals(mimeType) && !"image/png".equals(mimeType)) {
+            // Delete the invalid file before throwing an exception
+            Files.delete(tempFilePath);
+            throw new IllegalArgumentException("Invalid file type. Only JPG and PNG files are supported.");
+        }
+
+        // If MIME type is valid, return the saved photo entity
         Photo photo = new Photo();
-        photo.setImagePath(path.toString());  // Chemin absolu du fichier
-        photo.setAnnonce(annonce);  // Associer l'annonce
-
-        // Sauvegarder l'objet PiecesJustif dans la base de données
+        photo.setImagePath("/uploads/" + uniqueFileName); // Relative path for the image
+        photo.setAnnonce(annonce);
         return photoRepository.save(photo);
     }
 
-    // Récupérer les demandes par l'ID de l'annonce
+    // Fetch photos by Annonce ID
     public List<Photo> getPhotosByAnnonceId(Long annonceId) {
-        return photoRepository.findByAnnonceId(annonceId);
+        Optional<Annonce> annonceOptional = annonceRepository.findById(annonceId);
+        if (annonceOptional.isPresent()) {
+            return photoRepository.findByAnnonce(annonceOptional.get());
+        } else {
+            throw new IllegalArgumentException("Annonce with ID " + annonceId + " not found.");
+        }
     }
 }
