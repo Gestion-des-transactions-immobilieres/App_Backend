@@ -17,8 +17,14 @@ public class TypeBien {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true, nullable = false)
+    private String nom; // Exemple : Appartement, Villa
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, unique = true)
-    private BienType bienType;
+    @OneToMany(mappedBy = "typeBien",fetch = FetchType.LAZY)
+    private List<Annonce> annonces;
+
+    public TypeBien(Long id, String nom) {
+        this.id = id;
+        this.nom = nom;
+    }
 }

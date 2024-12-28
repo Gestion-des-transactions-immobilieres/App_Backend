@@ -22,8 +22,8 @@ public class Citoyen extends AppUser{
     @OneToMany(mappedBy = "citoyen",fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Demande> demandes;
 
-    public Citoyen(Long id, String login, String password, String email, String telephone, String adresse, List<Annonce> annonces, List<Demande> demandes) {
-        super(id, login, password, email, telephone, adresse); // Appel du constructeur parent AppUser
+    public Citoyen(Long id,String name, String login, String password, String email, String telephone, String adresse, List<Annonce> annonces, List<Demande> demandes) {
+        super(id, name,login, password, email, telephone, adresse); // Appel du constructeur parent AppUser
         this.annonces = annonces;
         this.demandes = demandes;
     }

@@ -15,14 +15,13 @@ public interface AnnonceRepository extends JpaRepository<Annonce, Long> {
     List<Annonce> findByCommune(Commune commune);
 
     // Récupérer les annonces par type de bien
-    List<Annonce> findByBienType(BienType bienType);
+    List<Annonce> findByTypeBien(TypeBien typeBien);
+    List<Annonce> findByTypeOperation(TypeOperation typeOperation);
+    List<Annonce> findByStatut(Statut statut);
 
-    // Récupérer les annonces par type d'opération (location ou vente)
-    List<Annonce> findByOperationType(OperationType operationType);
 
     // Récupérer les annonces par ID du citoyen (propriétaire de l'annonce)
     List<Annonce> findByCitoyen(Citoyen citoyen);
 
-    // Récupérer les annonces par statut (disponible, réservé, etc.)
-    List<Annonce> findByStatut(String statut);
+
 }

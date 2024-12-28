@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @DiscriminatorValue("Intermediaire")
 @Data
@@ -15,6 +17,9 @@ public class Intermediaire extends AppUser {
 
     private String rc;
     private String statut;
+
+    @OneToMany(mappedBy = "intermediaire",fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Annonce> annonces;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @OneToOne(mappedBy = "intermediaire",cascade = CascadeType.ALL)

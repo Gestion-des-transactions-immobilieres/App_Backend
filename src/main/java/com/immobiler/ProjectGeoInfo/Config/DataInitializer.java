@@ -4,12 +4,12 @@ import com.immobiler.ProjectGeoInfo.Entities.*;
 import com.immobiler.ProjectGeoInfo.Repositories.*;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.io.WKTWriter;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-import org.locationtech.jts.geom.Point;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -18,43 +18,61 @@ public class DataInitializer implements CommandLineRunner {
     private final TypeBienRepository typeBienRepository;
     private final CommuneRepository communeRepository;
     private final CitoyenRepository citoyenRepository;
-    private final AnnonceRepository annonceRepository;  // Ajout du repository Annonce
+    private final AnnonceRepository annonceRepository;
+    private final StatutRepository statutRepository;
+    private final IntermediaireRepository intermediaireRepository;
 
     public DataInitializer(TypeOperationRepository typeOperationRepository,
                            TypeBienRepository typeBienRepository,
                            CommuneRepository communeRepository,
                            CitoyenRepository citoyenRepository,
-                           AnnonceRepository annonceRepository) {  // Injection de dépendance du repository Annonce
+                           AnnonceRepository annonceRepository,
+                           StatutRepository statutRepository,
+                           IntermediaireRepository intermediaireRepository) {
         this.typeOperationRepository = typeOperationRepository;
         this.typeBienRepository = typeBienRepository;
         this.communeRepository = communeRepository;
         this.citoyenRepository = citoyenRepository;
-        this.annonceRepository = annonceRepository;  // Initialisation du repository Annonce
+        this.annonceRepository = annonceRepository;
+        this.statutRepository = statutRepository;
+        this.intermediaireRepository=intermediaireRepository;
     }
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         // Insérer des types d'opérations
-        TypeOperation vente = new TypeOperation(null, OperationType.VENTE);
-        TypeOperation location = new TypeOperation(null, OperationType.LOCATION);
+        TypeOperation vente = new TypeOperation(null, "Vente");
+        TypeOperation location = new TypeOperation(null, "Location");
         typeOperationRepository.save(vente);
         typeOperationRepository.save(location);
 
         // Insérer des types de biens
-        TypeBien appartement = new TypeBien(null, BienType.APPARTEMENT);
-        TypeBien villa = new TypeBien(null, BienType.VILLA);
+        TypeBien appartement = new TypeBien(null, "Appartement");
+        TypeBien villa = new TypeBien(null, "Villa");
         typeBienRepository.save(appartement);
         typeBienRepository.save(villa);
 
+        // Insérer des statuts
+        Statut disponible = new Statut(null, "Disponible");
+        Statut reserve = new Statut(null, "Réservé");
+        statutRepository.save(disponible);
+        statutRepository.save(reserve);
+
         // Insérer des communes
-        Commune casablanca = new Commune(null, "Casablanca", null, null,null);
-        Commune rabat = new Commune(null, "Rabat", null, null,null);
+        Commune casablanca = new Commune(null, "Casablanca", null, null, null);
+        Commune rabat = new Commune(null, "Rabat", null, null, null);
         communeRepository.save(casablanca);
         communeRepository.save(rabat);
 
         // Insérer un citoyen
-        Citoyen citoyen = new Citoyen(null, "citoyen1", "password123", "email1@example.com", "0612345678", "Adresse 1", null, null);
+        Citoyen citoyen = new Citoyen(null,"Ahmed", "citoyen1", "password123", "email1@example.com", "0612345678", "Adresse 1", null, null);
         citoyenRepository.save(citoyen);
+
+        Intermediaire intermediaire = new Intermediaire();
+        intermediaire.setName("Default Intermediaire");
+        // Save the intermediaire if needed (assume an IntermediaireRepository exists)
+        intermediaire = intermediaireRepository.save(intermediaire);
+
 
         // Ajouter une annonce (initialisation)
         Annonce annonce = new Annonce();
@@ -62,20 +80,28 @@ public class DataInitializer implements CommandLineRunner {
         annonce.setPrix(350000.0);
         annonce.setDescription("Belle villa à vendre");
         annonce.setDateOffre(LocalDate.now());
-        annonce.setStatut("Disponible");
+        annonce.setStatut(disponible);
 
         // Ajouter une localisation (Point) - Exemple pour un endroit fictif (Longitude, Latitude)
-        GeometryFactory geometryFactory = new GeometryFactory();
-        //Coordinate coordinate = new Coordinate(-7.6296, 33.5896);  // Remplace avec des coordonnées valides
-        //Point point = geometryFactory.createPoint(coordinate);
-        String wkt="POINT(-7.6296, 33.5896)";
-        annonce.setLocation(wkt);
+        try {
+            GeometryFactory geometryFactory = new GeometryFactory();
+            Coordinate coordinate = new Coordinate(-7.6296, 33.5896);  // Replace with valid coordinates
+            Point point = geometryFactory.createPoint(coordinate);
+
+            // Convert Point to WKT string
+            String wkt = new WKTWriter().write(point);
+            annonce.setLocation(wkt);
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la création du point de localisation : " + e.getMessage());
+        }
+
 
         // Lier les entités associées
+        annonce.setIntermediaire(intermediaire);
         annonce.setCitoyen(citoyen);
         annonce.setCommune(casablanca);
-        annonce.setBienType(BienType.VILLA);
-        annonce.setOperationType(OperationType.VENTE);
+        annonce.setTypeBien(villa);
+        annonce.setTypeOperation(vente);
 
         // Sauvegarder l'annonce dans la base de données
         annonceRepository.save(annonce);

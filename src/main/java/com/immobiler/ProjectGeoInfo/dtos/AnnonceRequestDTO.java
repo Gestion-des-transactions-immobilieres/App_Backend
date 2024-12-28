@@ -1,43 +1,20 @@
 package com.immobiler.ProjectGeoInfo.dtos;
 
-import com.immobiler.ProjectGeoInfo.Entities.Annonce;
+import lombok.Data;
 
+@Data
 public class AnnonceRequestDTO {
-    private Annonce annonce;
-    private Long citoyenId;
-    private Long communeId;
-    private String wkt;
+    private double surface;
+    private double prix;
+    private String description;
 
-    // Getters and setters
-    public Annonce getAnnonce() {
-        return annonce;
-    }
+    // WKT string for location instead of Point
+    private String location;
 
-    public void setAnnonce(Annonce annonce) {
-        this.annonce = annonce;
-    }
-
-    public Long getCitoyenId() {
-        return citoyenId;
-    }
-
-    public void setCitoyenId(Long citoyenId) {
-        this.citoyenId = citoyenId;
-    }
-
-    public Long getCommuneId() {
-        return communeId;
-    }
-
-    public void setCommuneId(Long communeId) {
-        this.communeId = communeId;
-    }
-
-    public String getWkt() {
-        return wkt;
-    }
-
-    public void setWkt(String wkt) {
-        this.wkt = wkt;
-    }
+    // IDs or names for related entities
+    private Long citoyenId;        // ID of the citizen who created the announcement
+    private Long communeId;        // ID of the commune
+    private String typeBienName;   // Name of the type of property
+    private String typeOperationName; // Name of the type of operation
+    private String statutName;     // Name of the status (e.g., Disponible, Réservé)
 }

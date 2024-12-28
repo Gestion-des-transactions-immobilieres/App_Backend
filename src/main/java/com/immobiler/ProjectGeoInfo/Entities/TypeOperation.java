@@ -5,19 +5,25 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class TypeOperation {
+        public TypeOperation(Long id, String nom) {
+                this.id = id;
+                this.nom = nom;
+        }
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Long id;
 
-    @Enumerated(EnumType.STRING) // Store the enum as a String in the database
-    @Column(nullable = false, unique = true)
-    private OperationType operationType;
+        @Column(unique = true, nullable = false)
+        private String nom; // Exemple : Vente, Location
 
-    // No longer need a relation with "Annonce"
-}
+        @OneToMany(mappedBy = "typeOperation",fetch = FetchType.LAZY)
+        private List<Annonce> annonces;
+    }
