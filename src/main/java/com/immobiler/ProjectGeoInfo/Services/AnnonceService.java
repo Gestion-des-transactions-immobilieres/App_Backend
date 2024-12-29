@@ -4,18 +4,13 @@ import com.immobiler.ProjectGeoInfo.Entities.*;
 import com.immobiler.ProjectGeoInfo.Repositories.*;
 import com.immobiler.ProjectGeoInfo.dtos.AnnonceRequestDTO;
 import com.immobiler.ProjectGeoInfo.dtos.AnnonceResponseDTO;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+import com.immobiler.ProjectGeoInfo.mappers.AnnonceMapper;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.io.WKTReader;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -30,21 +25,19 @@ public class AnnonceService {
     private final TypeBienRepository typeBienRepository;
     private final TypeOperationRepository typeOperationRepository;
     private final StatutRepository statutRepository;
-
-    @PersistenceContext
-    private EntityManager entityManager;
+    private final AnnonceMapper annonceMapper;
 
     // Récupérer une annonce par ID
     public AnnonceResponseDTO getAnnonceById(Long id) {
         Annonce annonce = annonceRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Annonce with ID " + id + " not found"));
-        return convertToResponseDTO(annonce);
+        return annonceMapper.FromAnnonce(annonce);
     }
 
     // Récupérer toutes les annonces
     public List<AnnonceResponseDTO> getAllAnnonces() {
         return annonceRepository.findAll().stream()
-                .map(this::convertToResponseDTO)
+                .map(annonceMapper::FromAnnonce)  
                 .collect(Collectors.toList());
     }
 
@@ -53,7 +46,7 @@ public class AnnonceService {
         Commune commune = communeRepository.findByNom(communeName)
                 .orElseThrow(() -> new IllegalArgumentException("Commune with name " + communeName + " not found"));
         return annonceRepository.findByCommune(commune).stream()
-                .map(this::convertToResponseDTO)
+                .map(annonceMapper::FromAnnonce)  
                 .collect(Collectors.toList());
     }
 
@@ -62,7 +55,7 @@ public class AnnonceService {
         TypeBien typeBien = typeBienRepository.findByNom(typeBienName)
                 .orElseThrow(() -> new IllegalArgumentException("TypeBien with name " + typeBienName + " not found"));
         return annonceRepository.findByTypeBien(typeBien).stream()
-                .map(this::convertToResponseDTO)
+                .map(annonceMapper::FromAnnonce)  
                 .collect(Collectors.toList());
     }
 
@@ -71,7 +64,7 @@ public class AnnonceService {
         TypeOperation typeOperation = typeOperationRepository.findByNom(typeOperationName)
                 .orElseThrow(() -> new IllegalArgumentException("TypeOperation with name " + typeOperationName + " not found"));
         return annonceRepository.findByTypeOperation(typeOperation).stream()
-                .map(this::convertToResponseDTO)
+                .map(annonceMapper::FromAnnonce)  
                 .collect(Collectors.toList());
     }
 
@@ -80,7 +73,7 @@ public class AnnonceService {
         Citoyen citoyen = (Citoyen) appUserRepository.findById(citoyenId)
                 .orElseThrow(() -> new IllegalArgumentException("Citoyen with ID " + citoyenId + " not found"));
         return annonceRepository.findByCitoyen(citoyen).stream()
-                .map(this::convertToResponseDTO)
+                .map(annonceMapper::FromAnnonce)  
                 .collect(Collectors.toList());
     }
 
@@ -89,47 +82,15 @@ public class AnnonceService {
         Statut statut = statutRepository.findByNom(statutName)
                 .orElseThrow(() -> new IllegalArgumentException("Statut with name " + statutName + " not found"));
         return annonceRepository.findByStatut(statut).stream()
-                .map(this::convertToResponseDTO)
+                .map(annonceMapper::FromAnnonce)  
                 .collect(Collectors.toList());
     }
 
     // Créer une annonce
     public AnnonceResponseDTO createAnnonce(AnnonceRequestDTO requestDTO) {
-        Citoyen citoyen = (Citoyen) appUserRepository.findById(requestDTO.getCitoyenId())
-                .orElseThrow(() -> new IllegalArgumentException("Citoyen with ID " + requestDTO.getCitoyenId() + " not found"));
-
-        Commune commune = communeRepository.findById(requestDTO.getCommuneId())
-                .orElseThrow(() -> new IllegalArgumentException("Commune with ID " + requestDTO.getCommuneId() + " not found"));
-
-        TypeBien typeBien = typeBienRepository.findByNom(requestDTO.getTypeBienName())
-                .orElseThrow(() -> new IllegalArgumentException("TypeBien with name " + requestDTO.getTypeBienName() + " not found"));
-
-        TypeOperation typeOperation = typeOperationRepository.findByNom(requestDTO.getTypeOperationName())
-                .orElseThrow(() -> new IllegalArgumentException("TypeOperation with name " + requestDTO.getTypeOperationName() + " not found"));
-
-        Statut statut = statutRepository.findByNom(requestDTO.getStatutName())
-                .orElseThrow(() -> new IllegalArgumentException("Statut with name " + requestDTO.getStatutName() + " not found"));
-
-        Annonce annonce = new Annonce();
-        annonce.setSurface(requestDTO.getSurface());
-        annonce.setPrix(requestDTO.getPrix());
-        annonce.setDescription(requestDTO.getDescription());
-
-        try {
-            annonce.setLocation(requestDTO.getLocation());
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid WKT format: " + requestDTO.getLocation());
-        }
-
-        annonce.setCitoyen(citoyen);
-        annonce.setCommune(commune);
-        annonce.setTypeBien(typeBien);
-        annonce.setTypeOperation(typeOperation);
-        annonce.setStatut(statut);
-        annonce.setDateOffre(LocalDate.now());
-
+        Annonce annonce = annonceMapper.FromAnnonceRequestDTO(requestDTO);
         Annonce savedAnnonce = annonceRepository.save(annonce);
-        return convertToResponseDTO(savedAnnonce);
+        return annonceMapper.FromAnnonce(savedAnnonce);
     }
 
     // Modifier une annonce existante
@@ -168,7 +129,7 @@ public class AnnonceService {
         }
 
         Annonce updatedAnnonce = annonceRepository.save(existingAnnonce);
-        return convertToResponseDTO(updatedAnnonce);
+        return annonceMapper.FromAnnonce(updatedAnnonce);
     }
 
     // Supprimer une annonce
@@ -183,21 +144,5 @@ public class AnnonceService {
 
         annonceRepository.save(existingAnnonce);
         annonceRepository.delete(existingAnnonce);
-    }
-
-    // Convertir une entité Annonce en DTO de réponse
-    private AnnonceResponseDTO convertToResponseDTO(Annonce annonce) {
-        return new AnnonceResponseDTO(
-                annonce.getId(),
-                annonce.getSurface(),
-                annonce.getPrix(),
-                annonce.getDescription(),
-                annonce.getLocation(),
-                annonce.getCommune().getNom(),
-                annonce.getTypeBien().getNom(),
-                annonce.getTypeOperation().getNom(),
-                annonce.getStatut().getNom(),
-                annonce.getDateOffre()
-        );
     }
 }
